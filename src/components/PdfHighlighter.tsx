@@ -7,7 +7,7 @@ import {
   PDFViewer,
   PDFLinkService,
   NullL10n,
-  PDFFindController
+  PDFFindController,
 } from "pdfjs-dist/legacy/web/pdf_viewer";
 
 import "pdfjs-dist/web/pdf_viewer.css";
