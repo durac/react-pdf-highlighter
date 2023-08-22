@@ -176,7 +176,7 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
       this.renderHighlights(this.props);
     }
     if (prevProps.searchValue != this.props.searchValue) {
-      this.viewer.findController.executeCommand("find", {
+      this.viewer.eventBus.dispatch("find", {
         query: this.props.searchValue,
         highlightAll: true,
         phraseSearch: true,
@@ -234,7 +234,7 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
 
   goToNextMatch = () => {
     const { searchValue } = this.props;
-    this.viewer.findController.executeCommand("findagain", {
+    this.viewer.eventBus.dispatch("findagain", {
       query: searchValue,
       highlightAll: true,
     });
@@ -242,7 +242,7 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
 
   goToPreviousMatch = () => {
     const { searchValue } = this.props;
-    this.viewer.findController.executeCommand("findagain", {
+    this.viewer.eventBus.dispatch("findagain", {
       query: searchValue,
       highlightAll: true,
       findPrevious: true,
