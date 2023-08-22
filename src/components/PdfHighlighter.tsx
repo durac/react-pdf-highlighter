@@ -7,6 +7,7 @@ import {
   PDFViewer,
   PDFLinkService,
   NullL10n,
+  PDFFindController
 } from "pdfjs-dist/legacy/web/pdf_viewer";
 
 import "pdfjs-dist/web/pdf_viewer.css";
@@ -77,8 +78,11 @@ interface Props<T_HT> {
   highlights: Array<T_HT>;
   onScrollChange: () => void;
   scrollRef: (scrollTo: (highlight: T_HT) => void) => void;
+  findRefs: (findPrev: () => void, findNext: () => void) => void;
   pdfDocument: PDFDocumentProxy;
   pdfScaleValue: string;
+  searchValue: string;
+  onSearch: (currentMatch: number, totalMatchCount: number) => void;
   onSelectionFinished: (
     position: ScaledPosition,
     content: { text?: string; image?: string },
@@ -96,6 +100,8 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
 > {
   static defaultProps = {
     pdfScaleValue: "auto",
+    searchValue: "",
+    onSearch: () => {},
   };
 
   state: State<T_HT> = {
@@ -141,6 +147,7 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
       const { ownerDocument: doc } = ref;
       eventBus.on("textlayerrendered", this.onTextLayerRendered);
       eventBus.on("pagesinit", this.onDocumentReady);
+      eventBus.on("updatetextlayermatches", this.calculateMatchProgress);
       doc.addEventListener("selectionchange", this.onSelectionChange);
       doc.addEventListener("keydown", this.handleKeyDown);
       doc.defaultView?.addEventListener("resize", this.debouncedScaleValue);
@@ -168,6 +175,13 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
     if (prevProps.highlights !== this.props.highlights) {
       this.renderHighlights(this.props);
     }
+    if (prevProps.searchValue != this.props.searchValue) {
+      this.viewer.findController.executeCommand("find", {
+        query: this.props.searchValue,
+        highlightAll: true,
+        phraseSearch: true,
+      });
+    }
   }
 
   init() {
@@ -182,6 +196,10 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
         textLayerMode: 2,
         removePageBorders: true,
         linkService: this.linkService,
+        findController: new PDFFindController({
+          eventBus: this.eventBus,
+          linkService: this.linkService,
+        }),
         l10n: NullL10n,
       });
 
@@ -192,6 +210,44 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
     // debug
     (window as any).PdfViewer = this;
   }
+
+  calculateMatchProgress = () => {
+    let totalMatchCount = 0;
+    let currentMatchIndex = 0;
+    let hasCurrentMatchIndex = false;
+    this.viewer.findController.pageMatches.forEach(
+      (pageMatches: number[], pageIndex: number) => {
+        if (
+          !hasCurrentMatchIndex &&
+          pageIndex === this.viewer.findController.selected.pageIdx
+        ) {
+          currentMatchIndex =
+            totalMatchCount + this.viewer.findController.selected.matchIdx;
+          hasCurrentMatchIndex = true;
+        }
+        totalMatchCount += pageMatches.length;
+      }
+    );
+    const currentMatch = totalMatchCount === 0 ? 0 : currentMatchIndex + 1;
+    this.props.onSearch(currentMatch, totalMatchCount);
+  };
+
+  goToNextMatch = () => {
+    const { searchValue } = this.props;
+    this.viewer.findController.executeCommand("findagain", {
+      query: searchValue,
+      highlightAll: true,
+    });
+  };
+
+  goToPreviousMatch = () => {
+    const { searchValue } = this.props;
+    this.viewer.findController.executeCommand("findagain", {
+      query: searchValue,
+      highlightAll: true,
+      findPrevious: true,
+    });
+  };
 
   componentWillUnmount() {
     this.unsubscribe();
@@ -469,11 +525,12 @@ export class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<
   };
 
   onDocumentReady = () => {
-    const { scrollRef } = this.props;
+    const { scrollRef, findRefs } = this.props;
 
     this.handleScaleValue();
 
     scrollRef(this.scrollTo);
+    findRefs(this.goToPreviousMatch, this.goToNextMatch);
   };
 
   onSelectionChange = () => {
