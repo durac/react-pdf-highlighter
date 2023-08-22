@@ -90,14 +90,14 @@ export class PdfHighlighter extends PureComponent {
         };
         this.goToNextMatch = () => {
             const { searchValue } = this.props;
-            this.viewer.findController.executeCommand("findagain", {
+            this.viewer.eventBus.dispatch("findagain", {
                 query: searchValue,
                 highlightAll: true,
             });
         };
         this.goToPreviousMatch = () => {
             const { searchValue } = this.props;
-            this.viewer.findController.executeCommand("findagain", {
+            this.viewer.eventBus.dispatch("findagain", {
                 query: searchValue,
                 highlightAll: true,
                 findPrevious: true,
@@ -265,7 +265,7 @@ export class PdfHighlighter extends PureComponent {
             this.renderHighlights(this.props);
         }
         if (prevProps.searchValue != this.props.searchValue) {
-            this.viewer.findController.executeCommand("find", {
+            this.viewer.eventBus.dispatch("find", {
                 query: this.props.searchValue,
                 highlightAll: true,
                 phraseSearch: true,
