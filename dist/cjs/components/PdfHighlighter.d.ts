@@ -35,6 +35,7 @@ interface Props<T_HT> {
     findRefs: (findPrev: () => void, findNext: () => void) => void;
     pdfDocument: PDFDocumentProxy;
     pdfScaleValue: string;
+    pagesRotation: number;
     searchValue: string;
     onSearch: (currentMatch: number, totalMatchCount: number) => void;
     onSelectionFinished: (position: ScaledPosition, content: {
@@ -46,6 +47,7 @@ interface Props<T_HT> {
 export declare class PdfHighlighter<T_HT extends IHighlight> extends PureComponent<Props<T_HT>, State<T_HT>> {
     static defaultProps: {
         pdfScaleValue: string;
+        pagesRotation: number;
         searchValue: string;
         onSearch: () => void;
     };

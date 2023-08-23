@@ -289,6 +289,12 @@ class PdfHighlighter extends react_1.PureComponent {
         if (prevProps.highlights !== this.props.highlights) {
             this.renderHighlights(this.props);
         }
+        if (prevProps.pdfScaleValue != this.props.pdfScaleValue) {
+            this.handleScaleValue();
+        }
+        if (prevProps.pagesRotation != this.props.pagesRotation) {
+            this.viewer.pagesRotation = this.props.pagesRotation;
+        }
         if (prevProps.searchValue != this.props.searchValue) {
             this.viewer.eventBus.dispatch("find", {
                 query: this.props.searchValue,
@@ -377,16 +383,16 @@ class PdfHighlighter extends react_1.PureComponent {
     scaledPositionToViewport({ pageNumber, boundingRect, rects, usePdfCoordinates, }) {
         const viewport = this.viewer.getPageView(pageNumber - 1).viewport;
         return {
-            boundingRect: (0, coordinates_1.scaledToViewport)(boundingRect, viewport, usePdfCoordinates),
-            rects: (rects || []).map((rect) => (0, coordinates_1.scaledToViewport)(rect, viewport, usePdfCoordinates)),
+            boundingRect: (0, coordinates_1.scaledToViewport)(boundingRect, viewport, usePdfCoordinates, this.viewer.pagesRotation),
+            rects: (rects || []).map((rect) => (0, coordinates_1.scaledToViewport)(rect, viewport, usePdfCoordinates, this.viewer.pagesRotation)),
             pageNumber,
         };
     }
     viewportPositionToScaled({ pageNumber, boundingRect, rects, }) {
         const viewport = this.viewer.getPageView(pageNumber - 1).viewport;
         return {
-            boundingRect: (0, coordinates_1.viewportToScaled)(boundingRect, viewport),
-            rects: (rects || []).map((rect) => (0, coordinates_1.viewportToScaled)(rect, viewport)),
+            boundingRect: (0, coordinates_1.viewportToScaled)(boundingRect, viewport, this.viewer.pagesRotation),
+            rects: (rects || []).map((rect) => (0, coordinates_1.viewportToScaled)(rect, viewport, this.viewer.pagesRotation)),
             pageNumber,
         };
     }
@@ -468,6 +474,7 @@ class PdfHighlighter extends react_1.PureComponent {
 exports.PdfHighlighter = PdfHighlighter;
 PdfHighlighter.defaultProps = {
     pdfScaleValue: "auto",
+    pagesRotation: 0,
     searchValue: "",
     onSearch: () => { },
 };
